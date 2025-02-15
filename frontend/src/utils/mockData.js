@@ -11,7 +11,6 @@ export const getData = () => {
                 name: 'John',
                 id: 1,
             }
-
         },
         {
             id: '2',
