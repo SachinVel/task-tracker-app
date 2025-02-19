@@ -5,45 +5,27 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
+import mongoose from 'mongoose';
 
+import typeDefs from './typeDefs/index.js'; // Import combined type definitions
+import resolvers from './resolvers/index.js'; // Import combined resolvers
+
+// console.log('typeDefs:', typeDefs);
+
+const MONGODB_URI = 'mongodb+srv://admin:pRbY6NzdXlp3v9hI@cluster0.z7vown2.mongodb.net/task_tracker';
 
 interface MyContext {
     token?: string;
 }
 
-const typeDefs = `#graphql
-  # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
-
-  # This "Book" type defines the queryable fields for every book in our data source.
-  type Book {
-    title: String
-    author: String
-  }
-
-  # The "Query" type is special: it lists all of the available queries that
-  # clients can execute, along with the return type for each. In this
-  # case, the "books" query returns an array of zero or more Books (defined above).
-  type Query {
-    books: [Book]
-  }
-`;
-
-const books = [
-    {
-        title: 'The Awakening',
-        author: 'Kate Chopin',
-    },
-    {
-        title: 'City of Glass',
-        author: 'Paul Auster',
-    },
-];
-
-const resolvers = {
-    Query: {
-        books: () => books,
-    },
-};
+mongoose.connect(MONGODB_URI, {
+    // useNewUrlParser: true,
+    // useUnifiedTopology: true,
+}).then(() => {
+    console.log('Connected to MongoDB');
+}).catch((error) => {
+    console.error('Error connecting to MongoDB:', error);
+});
 
 // Required logic for integrating with Express
 const app = express();
@@ -80,3 +62,6 @@ await new Promise<void>((resolve) =>
     httpServer.listen({ port: 4000 }, resolve),
 );
 console.log(`🚀 Server ready at http://localhost:4000/`);
+
+
+
