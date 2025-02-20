@@ -43,15 +43,41 @@ export default function Login() {
       return;
     }
 
-   await backendCall.post('/register', {
-      username: username,
-      password: password,
-    }).then((res) => {
-      setIsSucSnackbarOpen(true);
-    }).catch((err) => {
-      setErrorMessage(err.response.data.error);
-      setIsErrSnackbarOpen(true);
+  //  await backendCall.post('/register', {
+  //     username: username,
+  //     password: password,
+  //   }).then((res) => {
+  //     setIsSucSnackbarOpen(true);
+  //   }).catch((err) => {
+  //     setErrorMessage(err.response.data.error);
+  //     setIsErrSnackbarOpen(true);
+  //   });
+    const REGISTER_MUTATION = `
+      mutation Register($username: String!, $password: String!) {
+        register(username: $username, password: $password) {
+          success
+          message
+        }
+      }
+    `;
+
+    const response = await backendCall.post('/graphql', {
+      query: REGISTER_MUTATION,
+      variables: {
+        username: username,
+        password: password,
+      },
     });
+
+    console.log('Response from register:', response);
+    const { data } = response.data;
+
+    if (data.register.success) {
+      setIsSucSnackbarOpen(true);
+    } else {
+      setErrorMessage(data.register.message);
+      setIsErrSnackbarOpen(true);
+    }
 
   }
 

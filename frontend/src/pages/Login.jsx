@@ -33,17 +33,24 @@ export default function Login() {
   const login = async (event) => {
     event.preventDefault();
 
-    await backendCall.post('/login', {
-      username: username,
-      password: password,
+    await backendCall.post('/graphql', {
+      query: `
+      mutation {
+        login(username: "${username}", password: "${password}") {
+        token
+        username
+        }
+      }
+      `
     }).then((res) => {
-      window.localStorage.setItem('token', res.data.token);
-      window.localStorage.setItem('username', res.data.username);
+      const data = res.data.data.login;
+      window.localStorage.setItem('token', data.token);
+      window.localStorage.setItem('username', data.username);
       window.location = '/task';
     }).catch((err) => {
-      if (err.response && err.response.data && err.response.data.error) {
-        setErrorMessage(err.response.data.error);
-        setIsSnackbarOpen(true);
+      if (err.response && err.response.errors && err.response.errors.length > 0) {
+      setErrorMessage(err.response.errors[0].message);
+      setIsSnackbarOpen(true);
       }
     });
   }

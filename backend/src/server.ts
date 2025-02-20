@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
 
 import typeDefs from './typeDefs/index.js'; // Import combined type definitions
 import resolvers from './resolvers/index.js'; // Import combined resolvers
+import { authenticateUser } from './utils/auth.js';
 
 // console.log('typeDefs:', typeDefs);
 
@@ -53,7 +54,10 @@ app.use(
     // expressMiddleware accepts the same arguments:
     // an Apollo Server instance and optional configuration options
     expressMiddleware(server, {
-        context: async ({ req }) => ({ token: req.headers.token }),
+        context: async ({ req }) => {
+            const user = authenticateUser(req);
+            return { user };
+        },
     }),
 );
 
