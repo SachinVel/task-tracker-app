@@ -42,10 +42,10 @@ export default function TaskPopup({ isOpen, popupType, onClose, onCreate, onUpda
             return;
         }
         onCreate({
-            taskTitle : taskTitle,
-            taskDesc : taskDescription,
-            taskStatus : taskStatus,
-            taskDue : taskDate.unix()+''
+            title : taskTitle,
+            description : taskDescription,
+            status : taskStatus,
+            dueDate : taskDate.unix()+''
         });
     }
 
@@ -56,20 +56,22 @@ export default function TaskPopup({ isOpen, popupType, onClose, onCreate, onUpda
             return;
         }
         onUpdate({
-            taskID : taskId,
-            taskTitle : taskTitle,
-            taskDesc : taskDescription,
-            taskStatus : taskStatus,
-            taskDue : taskDate.unix()+''
+            id : taskId,
+            title : taskTitle,
+            description : taskDescription,
+            status : taskStatus,
+            dueDate : taskDate.unix()+''
         });
     }
 
     useEffect(()=>{
         if( popupType==='update' && taskData!=null ){
-            setTaskDate(dayjs(new Date(+taskData.taskDue*1000)));
-            setTaskDescription(taskData.taskDesc);
-            setTaskStatus(taskData.taskStatus);
-            setTaskTitle(taskData.taskTitle);
+            let date = dayjs(new Date(+taskData.dueDate*1000));
+            setTaskDate(date);
+            setTaskDescription(taskData.description);
+            
+            setTaskStatus(taskData.status);
+            setTaskTitle(taskData.title);
             setTaskId(taskData.id);
         }
     },[taskData,isOpen]);

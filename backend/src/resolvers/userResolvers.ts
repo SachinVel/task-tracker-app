@@ -42,7 +42,6 @@ const resolvers = {
 
         },
         login: async (_: any, { username, password }) => {
-            console.log("Login attempt with username:", username, "and password:", password);
             const user = await User.findOne({ username, password });
             if (!user) throw new Error("Invalid credentials");
 

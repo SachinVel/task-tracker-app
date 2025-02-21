@@ -69,7 +69,6 @@ export default function Login() {
       },
     });
 
-    console.log('Response from register:', response);
     const { data } = response.data;
 
     if (data.register.success) {
@@ -92,68 +91,71 @@ export default function Login() {
   return (
     <>
       <Header />
-      <div style={{ marginTop: '150px' }}>
-        <div>
-          <h2>Register</h2>
-        </div>
-
-        <div>
-          <TextField
-            id="standard-basic"
-            type="text"
-            autoComplete="off"
-            name="username"
-            value={username}
-            onChange={onUsernameChange}
-            placeholder="User Name"
-            required
-          />
-          <br /><br />
-          <TextField
-            id="standard-basic"
-            type="password"
-            autoComplete="off"
-            name="password"
-            value={password}
-            onChange={onPasswordChange}
-            placeholder="Password"
-            required
-          />
-          <br /><br />
-          <TextField
-            id="standard-basic"
-            type="password"
-            autoComplete="off"
-            name="confirm_password"
-            value={confirmPassword}
-            onChange={onConfirmPasswordChange}
-            placeholder="Confirm Password"
-            required
-          />
-          <br /><br />
-          <Button
-            className="button_style"
-            variant="contained"
-            color="primary"
-            size="small"
-            disabled={username === '' || password === ''}
-            onClick={register}
-          >
-            Register
-          </Button> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-          <Link href="/">
-            Login
-          </Link>
+      <div className="absolute inset-0 flex justify-center items-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md border-4">
+          <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
+          <div className="mb-4">
+            <TextField
+              id="standard-basic"
+              type="text"
+              autoComplete="off"
+              name="username"
+              value={username}
+              onChange={onUsernameChange}
+              placeholder="User Name"
+              required
+              fullWidth
+            />
+          </div>
+          <div className="mb-4">
+            <TextField
+              id="standard-basic"
+              type="password"
+              autoComplete="off"
+              name="password"
+              value={password}
+              onChange={onPasswordChange}
+              placeholder="Password"
+              required
+              fullWidth
+            />
+          </div>
+          <div className="mb-6">
+            <TextField
+              id="standard-basic"
+              type="password"
+              autoComplete="off"
+              name="confirm_password"
+              value={confirmPassword}
+              onChange={onConfirmPasswordChange}
+              placeholder="Confirm Password"
+              required
+              fullWidth
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <Button
+              className="button_style"
+              variant="contained"
+              color="primary"
+              size="small"
+              disabled={username === '' || password === ''}
+              onClick={register}
+            >
+              Register
+            </Button>
+            <Link href="/">
+              Login
+            </Link>
+          </div>
         </div>
       </div>
       <Snackbar open={isSucSnackbarOpen} autoHideDuration={4000} onClose={handleSucSnackbarClose}>
         <Alert severity="success" onClose={handleSucSnackbarClose}>User is registered successfully. Go to login page.</Alert>
-
       </Snackbar>
       <Snackbar open={isErrSnackbarOpen} autoHideDuration={4000} onClose={hanldeErrSnackbarClose}>
         <Alert severity="error" onClose={hanldeErrSnackbarClose}>{errorMesage}</Alert>
       </Snackbar>
     </>
-
   );
 }

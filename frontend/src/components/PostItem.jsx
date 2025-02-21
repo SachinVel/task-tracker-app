@@ -159,7 +159,7 @@ function PostItem(props) {
           fontSize: "15px",
           fontWeight: "bold"
         }}>
-          {task.taskTitle}
+          {task.title}
         </Typography>
 
         <Stack direction="row" spacing={2} flexWrap="wrap">
@@ -171,7 +171,7 @@ function PostItem(props) {
           <Typography align='left' flexWrap="wrap" sx={{
             overflow: 'hidden', textOverflow: 'ellipsis', width:"100%"
           }}>
-            {task.taskDesc}
+            {task.description}
           </Typography>
         </Stack>
 
@@ -182,7 +182,7 @@ function PostItem(props) {
             Status : 
           </Typography>
           <Typography align='left'>
-            {statusField[task.taskStatus]}
+            {statusField[task.status]}
           </Typography>
         </Stack>
 
@@ -193,7 +193,7 @@ function PostItem(props) {
             Due Date : 
           </Typography>
           <Typography align='left'>
-            { dayjs(new Date(+task.taskDue*1000)).format('MM/DD/YYYY')}
+            { dayjs(new Date(+task.dueDate*1000)).format('MM/DD/YYYY')}
           </Typography>
         </Stack>
 

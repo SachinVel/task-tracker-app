@@ -10,12 +10,14 @@ import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import '../styles/Layout.css';
 import List from "../components/List";
 import TaskPopup from "../components/TaskPopup";
-import { backendCall } from "../utils/network";
+import { backendCall, apolloClient } from "../utils/network";
 import Stack from '@mui/material/Stack';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import dayjs from 'dayjs';
 import FilterPopup from "../components/FilterPopup";
+import { gql } from '@apollo/client';
+import { onError } from '@apollo/client/link/error';
 
 
 
@@ -38,7 +40,7 @@ export default function Task() {
 
 
   const handleViewChange = (event, newViewType) => {
-    if( newViewType==null ){
+    if (newViewType == null) {
       return;
     }
     setViewType(newViewType);
@@ -63,25 +65,50 @@ export default function Task() {
     setToken(userToken);
     setUserName(username);
 
-    const getTaskData = async (userToken) => {
-      try {
-        let response = await backendCall.get('/tasks/getall', {
-          headers: {
-            'token': userToken
+    const errorLink = onError(({ graphQLErrors }) => {
+      if (graphQLErrors) {
+        graphQLErrors.forEach(({ message }) => {
+          if (message === 'TokenInvalid') {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            window.location = '/login';
           }
         });
-        let data = response.data;
-        let taskData = data.taskData.map((task) => {
-          task.id = task._id;
-          return task;
+      }
+    });
+
+    const getTaskData = async (userToken) => {
+      try {
+        let { data } = await apolloClient.query({
+          query: gql`
+            query {
+              getAllTasks {
+                id
+                title
+                description
+                status
+                dueDate
+              }
+            }
+          `,
+          context: {
+            headers: {
+              'Authorization': `Bearer ${userToken}`
+            }
+          }
         });
+        if (data.getAllTasks == null) {
+          console.error('Error in getting tasks');
+          return;
+        }
+        let taskData = data.getAllTasks;
         originalTaskData.current = taskData;
         setTaskData(originalTaskData.current);
       } catch (err) {
-        console.log('err : ', err);
+        console.error('err : ', err);
       }
     }
-
+    apolloClient.setLink(errorLink.concat(apolloClient.link));
     getTaskData(userToken);
 
   }, []);
@@ -102,7 +129,7 @@ export default function Task() {
       let value = filterData.title.value;
       value = value == null ? '' : value;
       newTaskList = newTaskList.filter((task) => {
-        if (task.taskTitle.includes(value)) {
+        if (task.title.includes(value)) {
           return true;
         }
         return false;
@@ -113,7 +140,7 @@ export default function Task() {
       let value = filterData.description.value;
       value = value == null ? '' : value;
       newTaskList = newTaskList.filter((task) => {
-        if (task.taskDesc.includes(value)) {
+        if (task.description.includes(value)) {
           return true;
         }
         return false;
@@ -124,7 +151,7 @@ export default function Task() {
       let value = filterData.status.value;
       value = value == null ? '' : value;
       newTaskList = newTaskList.filter((task) => {
-        if (task.taskStatus.includes(value)) {
+        if (task.status.includes(value)) {
           return true;
         }
         return false;
@@ -135,17 +162,13 @@ export default function Task() {
       let value = filterData.date.value;
       value = value == null ? '' : dayjs(new Date(+value * 1000)).format('MM/DD/YYYY');
       newTaskList = newTaskList.filter((task) => {
-        let dateStr = dayjs(new Date(+task.taskDue * 1000)).format('MM/DD/YYYY')
+        let dateStr = dayjs(new Date(+task.dueDate * 1000)).format('MM/DD/YYYY')
         if (dateStr == value) {
           return true;
         }
         return false;
       })
     }
-
-
-    // dayjs(new Date(+params.value * 1000)).format('MM/DD/YYYY')
-
 
     return newTaskList;
 
@@ -178,14 +201,32 @@ export default function Task() {
 
   const onTaskCreate = async (curTaskData) => {
     try {
-      let response = await backendCall.post('/tasks/create', curTaskData, {
-        headers: {
-          'token': token
+
+      let { data } = await apolloClient.mutate({
+        mutation: gql`
+          mutation {
+            createTask(title: "${curTaskData.title}", status: "${curTaskData.status}", description: "${curTaskData.description}", dueDate: "${curTaskData.dueDate}") {
+              id
+              title
+              description
+              status
+              dueDate
+            }
+          }
+        `,
+        context: {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         }
       });
-      //empty the filter Options
-      let newTaskData = response.data.taskData[0];
-      newTaskData.id = newTaskData._id;
+
+      if (data.createTask == null) {
+        console.error('Error in creating task');
+        return;
+      }
+      let newTaskData = data.createTask;
+      newTaskData.dueDate = dayjs(new Date(newTaskData.dueDate * 1000)).format('MM/DD/YYYY');
       let newTaskList = [...originalTaskData.current];
       newTaskList.push(newTaskData);
       originalTaskData.current = newTaskList;
@@ -210,17 +251,32 @@ export default function Task() {
 
   const onTaskUpdate = async (curTaskData) => {
     try {
-      let response = await backendCall.put('/tasks/update', curTaskData, {
-        headers: {
-          'token': token
+      let { data } = await apolloClient.mutate({
+        mutation: gql`
+          mutation {
+            updateTask(id: "${curTaskData.id}", title: "${curTaskData.title}", status: "${curTaskData.status}", description: "${curTaskData.description}", dueDate: "${curTaskData.dueDate}") {
+              success
+              message
+            }
+          }
+        `,
+        context: {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         }
       });
-      if (response.data.updated) {
+      if (data.updateTask == null) {
+        console.error('Error in updating task');
+        return;
+      }
+
+      if (data.updateTask.success) {
         let newTaskList = [...originalTaskData.current];
         newTaskList = newTaskList.map((task) => {
-          if (task.id === curTaskData.taskID) {
+          if (task.id === curTaskData.id) {
             return {
-              id: curTaskData.taskID,
+              id: curTaskData.id,
               ...curTaskData
             };
           }
@@ -241,15 +297,25 @@ export default function Task() {
 
   const onTaskUpdateStatus = async (taskStatusData) => {
     try {
-      let response = await backendCall.put('/tasks/updateStatus', taskStatusData, {
-        headers: {
-          'token': token
+      const { data } = await apolloClient.mutate({
+        mutation: gql`
+          mutation {
+            updateTaskStatus(id: "${taskStatusData.id}", status: "${taskStatusData.status}") {
+              success
+              message
+            }
+          }
+        `,
+        context: {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         }
       });
-      let newTaskList = [...originalTaskData.current];
-      newTaskList = newTaskList.map((task) => {
-        if (task.id == taskStatusData.taskID) {
-          task.taskStatus = taskStatusData.taskStatus;
+
+      let newTaskList = originalTaskData.current.map((task) => {
+        if (task.id == taskStatusData.id) {
+          return { ...task, status: taskStatusData.status };
         }
         return task;
       });
@@ -267,24 +333,38 @@ export default function Task() {
   }
 
   const handleTaskDelete = async (taskId) => {
-    let response = await backendCall.delete('/tasks/delete',
-      {
-        data: {
-          taskID: taskId
-        },
-        headers: {
-          'token': token
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: gql`
+          mutation {
+            deleteTask(id: "${taskId}") {
+              success
+              message
+            }
+          }
+        `,
+        context: {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         }
       });
-    if (response.data.deleted) {
-      let newTaskList = [...originalTaskData.current];
-      newTaskList = newTaskList.filter((task) => (task.id !== taskId));
-      originalTaskData.current = newTaskList;
-      if (isFilteredApplied) {
-        newTaskList = applyFilter(newTaskList, filterOptions);
+
+      if (data.deleteTask.success) {
+        let newTaskList = [...originalTaskData.current];
+        newTaskList = newTaskList.filter((task) => (task.id !== taskId));
+        originalTaskData.current = newTaskList;
+        if (isFilteredApplied) {
+          newTaskList = applyFilter(newTaskList, filterOptions);
+        }
+        setTaskData(newTaskList);
+      } else {
+        console.error('Error in deleting task:', data.deleteTask.message);
       }
-      setTaskData(newTaskList);
+    } catch (err) {
+      console.error('Error in deleting task:', err);
     }
+
   }
 
   const logout = () => {
@@ -295,11 +375,11 @@ export default function Task() {
 
 
   const ListColumns = [
-    { field: 'taskTitle', headerName: 'Title', flex: 3, headerClassName: 'list-header' },
-    { field: 'taskDesc', headerName: 'Description', flex: 4, headerClassName: 'list-header' },
-    { field: 'taskStatus', headerName: 'Status', flex: 2, headerClassName: 'list-header' },
+    { field: 'title', headerName: 'Title', flex: 3, headerClassName: 'list-header' },
+    { field: 'description', headerName: 'Description', flex: 4, headerClassName: 'list-header' },
+    { field: 'status', headerName: 'Status', flex: 2, headerClassName: 'list-header' },
     {
-      field: 'taskDue', headerName: 'Due Date', headerClassName: 'list-header', flex: 2, valueFormatter: (params) => {
+      field: 'dueDate', headerName: 'Due Date', headerClassName: 'list-header', flex: 2, valueFormatter: (params) => {
         return dayjs(new Date(+params.value * 1000)).format('MM/DD/YYYY');
       }
     },

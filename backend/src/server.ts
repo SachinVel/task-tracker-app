@@ -11,7 +11,6 @@ import typeDefs from './typeDefs/index.js'; // Import combined type definitions
 import resolvers from './resolvers/index.js'; // Import combined resolvers
 import { authenticateUser } from './utils/auth.js';
 
-// console.log('typeDefs:', typeDefs);
 
 const MONGODB_URI = 'mongodb+srv://admin:pRbY6NzdXlp3v9hI@cluster0.z7vown2.mongodb.net/task_tracker';
 

@@ -8,6 +8,7 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import typeDefs from './typeDefs/index.js'; // Import combined type definitions
 import resolvers from './resolvers/index.js'; // Import combined resolvers
+import { authenticateUser } from './utils/auth.js';
 // console.log('typeDefs:', typeDefs);
 const MONGODB_URI = 'mongodb+srv://admin:pRbY6NzdXlp3v9hI@cluster0.z7vown2.mongodb.net/task_tracker';
 mongoose.connect(MONGODB_URI, {
@@ -39,7 +40,10 @@ app.use('/', cors(), express.json(),
 // expressMiddleware accepts the same arguments:
 // an Apollo Server instance and optional configuration options
 expressMiddleware(server, {
-    context: async ({ req }) => ({ token: req.headers.token }),
+    context: async ({ req }) => {
+        const user = authenticateUser(req);
+        return { user };
+    },
 }));
 // Modified server startup
 await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
