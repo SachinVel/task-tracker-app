@@ -77,8 +77,8 @@ const Board = ({
     setColumns(data.quoteMap);
 
     onTaskUpdateStatus({
-      taskID : result.draggableId,
-      taskStatus : destination.droppableId
+      id : result.draggableId,
+      status : destination.droppableId
     })
   };
 
@@ -93,14 +93,14 @@ const Board = ({
     let newList = [];
     data.forEach(task => {
       dataSet[task.id] = task;
-      if( !listSet.has(task.id) && task.taskStatus===status){
+      if( !listSet.has(task.id) && task.status===status){
         newList.push(task);
       }
     });
     
     //update existing
     taskList = taskList.map((task)=>{
-      if( dataSet[task.id] && dataSet[task.id].taskStatus===status){
+      if( dataSet[task.id] && dataSet[task.id].status===status){
         return dataSet[task.id];
       }else{
         return null;
